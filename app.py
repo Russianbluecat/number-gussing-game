@@ -1,4 +1,4 @@
-st.markdown("</div>", unsafe_allow_html=True)import streamlit as st
+import streamlit as st
 import random
 
 def create_new_game(max_number=100, max_attempts=5):
