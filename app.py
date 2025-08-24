@@ -1,4 +1,4 @@
-import streamlit as st
+st.markdown("</div>", unsafe_allow_html=True)import streamlit as st
 import random
 
 def create_new_game(max_number=100, max_attempts=5):
@@ -40,10 +40,7 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     .game-container {
-        background-color: #e8f4fd;
-        padding: 2rem;
-        border-radius: 10px;
-        border: 1px solid #b3d9ff;
+        padding: 2rem 0;
         margin-bottom: 2rem;
     }
     .result-success {
@@ -129,7 +126,6 @@ if not st.session_state.game_state["game_started"]:
 
 else:
     # 게임 플레이 영역
-    st.markdown('<div class="game-container">', unsafe_allow_html=True)
     st.markdown("## 🎲 게임 플레이")
     
     game_state = st.session_state.game_state
@@ -145,15 +141,17 @@ else:
             max_value=game_state['max_number'],
             value=None,
             placeholder=f"1부터 {game_state['max_number']} 사이의 숫자",
-            key="user_guess"
+            key="user_guess",
+            on_change=lambda: st.session_state.update({"enter_pressed": True})
         )
         
-        # 추측 버튼
+        # 추측 버튼 또는 엔터 처리
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             guess_button = st.button("🎯 추측하기!", use_container_width=True, type="primary")
         
-        if guess_button and user_guess is not None:
+        # 엔터키 또는 버튼 클릭 시 처리
+        if (guess_button or st.session_state.get("enter_pressed", False)) and user_guess is not None:
             game_state["attempts_left"] -= 1
             game_state["attempts_used"] = game_state["max_attempts"] - game_state["attempts_left"]
             
@@ -177,9 +175,15 @@ else:
             
             # 상태 업데이트
             st.session_state.game_state = game_state
+            # 엔터 상태 초기화
+            if "enter_pressed" in st.session_state:
+                del st.session_state["enter_pressed"]
             
-        elif guess_button and user_guess is None:
+        elif (guess_button or st.session_state.get("enter_pressed", False)) and user_guess is None:
             st.error("⚠️ 숫자를 입력해주세요!")
+            # 엔터 상태 초기화
+            if "enter_pressed" in st.session_state:
+                del st.session_state["enter_pressed"]
     
     st.markdown("</div>", unsafe_allow_html=True)
     
