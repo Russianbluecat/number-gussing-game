@@ -36,10 +36,7 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     .setup-container {
-        background-color: #f8f9fa;
-        padding: 2rem;
-        border-radius: 10px;
-        border: 1px solid #dee2e6;
+        padding: 2rem 0;
         margin-bottom: 2rem;
     }
     .game-container {
@@ -92,7 +89,6 @@ st.markdown('<h1 class="main-header">🎯 Playing Customizable Number Guessing G
 # 게임 설정 또는 플레이 영역
 if not st.session_state.game_state["game_started"]:
     # 게임 설정 영역
-    st.markdown('<div class="setup-container">', unsafe_allow_html=True)
     st.markdown("## ⚙️ 게임 설정")
     st.markdown('<p class="info-text">원하는 게임 설정을 입력하고 시작하세요!</p>', unsafe_allow_html=True)
     
@@ -121,8 +117,6 @@ if not st.session_state.game_state["game_started"]:
             label_visibility="collapsed"
         )
         st.markdown('<p class="info-text">기본값: 5회</p>', unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
     
     # 게임 시작 버튼
     col1, col2, col3 = st.columns([1, 2, 1])
