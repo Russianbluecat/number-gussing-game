@@ -232,7 +232,7 @@ def add_auto_focus_script():
 
 # --- 메인 함수 ---
 def main():
-    st.set_page_config(page_title="🎯 숫자 맞추기 게임",  layout="centered")
+    st.set_page_config(page_title="숫자 맞추기 게임", page_icon="🎯",  layout="centered")
     st.markdown(get_custom_css(), unsafe_allow_html=True)
     initialize_session_state()
     render_game_header()
