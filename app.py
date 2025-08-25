@@ -89,31 +89,27 @@ if not st.session_state.game_state["game_started"]:
     st.markdown("## ⚙️ 게임 설정")
     st.markdown('<p class="info-text">원하는 게임 설정을 입력하고 시작하세요!</p>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    st.markdown("**Last Number** (1부터 이 숫자까지)")
+    max_number = st.number_input(
+        "Last Number",
+        min_value=2,
+        max_value=10000,
+        value=100,
+        step=1,
+        label_visibility="collapsed"
+    )
+    st.markdown('<p class="info-text">기본값: 100</p>', unsafe_allow_html=True)
     
-    with col1:
-        st.markdown("**Last Number** (1부터 이 숫자까지)")
-        max_number = st.number_input(
-            "Last Number",
-            min_value=2,
-            max_value=10000,
-            value=100,
-            step=1,
-            label_visibility="collapsed"
-        )
-        st.markdown('<p class="info-text">기본값: 100</p>', unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("**시도 횟수**")
-        max_attempts = st.number_input(
-            "시도 횟수",
-            min_value=1,
-            max_value=100,
-            value=5,
-            step=1,
-            label_visibility="collapsed"
-        )
-        st.markdown('<p class="info-text">기본값: 5회</p>', unsafe_allow_html=True)
+    st.markdown("**시도 횟수**")
+    max_attempts = st.number_input(
+        "시도 횟수",
+        min_value=1,
+        max_value=100,
+        value=5,
+        step=1,
+        label_visibility="collapsed"
+    )
+    st.markdown('<p class="info-text">기본값: 5회</p>', unsafe_allow_html=True)
     
     # 게임 시작 버튼
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -134,14 +130,15 @@ else:
         st.markdown(f"**🎯 1부터 {game_state['max_number']} 사이의 숫자를 맞춰보세요!**")
         st.markdown(f"**⏰ 남은 시도 횟수: {game_state['attempts_left']}회**")
         
-        # 숫자 입력
+        # 숫자 입력 (틀렸을 때 자동으로 초기화되도록 key 변경)
+        input_key = f"user_guess_{game_state.get('attempts_used', 0)}"
         user_guess = st.number_input(
             "숫자를 입력하세요:",
             min_value=1,
             max_value=game_state['max_number'],
             value=None,
             placeholder=f"1부터 {game_state['max_number']} 사이의 숫자",
-            key="user_guess",
+            key=input_key,
             on_change=lambda: st.session_state.update({"enter_pressed": True})
         )
         
@@ -184,8 +181,6 @@ else:
             # 엔터 상태 초기화
             if "enter_pressed" in st.session_state:
                 del st.session_state["enter_pressed"]
-    
-    st.markdown("</div>", unsafe_allow_html=True)
     
     # 새 게임 시작 버튼 (항상 표시)
     st.markdown("---")
