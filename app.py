@@ -2,8 +2,6 @@ import streamlit as st
 import random
 import json
 from datetime import datetime
-import plotly.graph_objects as go
-import plotly.express as px
 
 # 상수 정의
 class GameConfig:
@@ -16,7 +14,7 @@ class GameConfig:
 
 # 페이지 설정
 st.set_page_config(
-    page_title=" 숫자 맞추기 게임",
+    page_title="🎯 숫자 맞추기 게임",
     page_icon="🎯",
     layout="centered"
 )
@@ -463,42 +461,25 @@ def render_current_game():
     if st.session_state.guesses:
         st.markdown("### 📊 추측 히스토리")
         
-        # 시각적 표시
-        fig = go.Figure()
+        # 간단한 막대 차트로 시각화
+        chart_data = {
+            '시도': list(range(1, len(st.session_state.guesses) + 1)),
+            '추측값': st.session_state.guesses
+        }
         
-        fig.add_trace(go.Scatter(
-            x=list(range(1, len(st.session_state.guesses) + 1)),
-            y=st.session_state.guesses,
-            mode='lines+markers',
-            name='추측값',
-            line=dict(color='blue', width=3),
-            marker=dict(size=10)
-        ))
+        # Streamlit 기본 차트 사용
+        st.bar_chart(chart_data, x='시도', y='추측값', height=300)
         
-        if not st.session_state.game_over:
-            fig.add_hline(
-                y=st.session_state.target_number, 
-                line_dash="dash", 
-                line_color="red",
-                annotation_text="정답 (게임 종료 후 공개)"
-            )
-        else:
-            fig.add_hline(
-                y=st.session_state.target_number, 
-                line_dash="dash", 
-                line_color="red",
-                annotation_text=f"정답: {st.session_state.target_number}"
-            )
-        
-        fig.update_layout(
-            title="추측 패턴",
-            xaxis_title="시도 횟수",
-            yaxis_title="추측값",
-            height=400,
-            showlegend=True
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+        # 정답과의 거리 표시
+        if st.session_state.game_over:
+            st.write(f"🎯 **정답:** {st.session_state.target_number}")
+            
+            distances = [abs(guess - st.session_state.target_number) for guess in st.session_state.guesses]
+            min_distance = min(distances)
+            closest_attempt = distances.index(min_distance) + 1
+            
+            st.write(f"🔍 **가장 가까웠던 시도:** {closest_attempt}번째 ({st.session_state.guesses[closest_attempt-1]})")
+            st.write(f"📏 **최소 거리:** {min_distance}")
         
         # 텍스트 히스토리
         guesses_text = " → ".join([str(g) for g in st.session_state.guesses])
@@ -532,23 +513,38 @@ def render_game_history():
         with st.expander("📈 게임 히스토리", expanded=False):
             recent_games = st.session_state.game_history[-10:]  # 최근 10게임
             
-            # 성과 트렌드 차트
-            attempts_data = [game['attempts'] for game in recent_games if game['won']]
-            if attempts_data:
-                fig = px.line(
-                    y=attempts_data,
-                    title="최근 승리 게임의 시도 횟수 트렌드",
-                    labels={'index': '게임 순서', 'y': '시도 횟수'}
-                )
-                st.plotly_chart(fig, use_container_width=True)
+            # 성과 트렌드를 간단한 라인 차트로
+            won_games = [game for game in recent_games if game['won']]
+            if won_games:
+                attempts_data = [game['attempts'] for game in won_games]
+                
+                # Streamlit 기본 라인 차트 사용
+                st.markdown("**🏆 승리 게임 시도 횟수 트렌드**")
+                st.line_chart(attempts_data, height=200)
+                
+                avg_attempts = sum(attempts_data) / len(attempts_data)
+                st.write(f"📊 **평균 시도 횟수:** {avg_attempts:.1f}번")
+            
+            # 승률 통계
+            total_recent = len(recent_games)
+            wins_recent = len(won_games)
+            if total_recent > 0:
+                recent_win_rate = (wins_recent / total_recent) * 100
+                st.write(f"📈 **최근 승률:** {recent_win_rate:.1f}% ({wins_recent}/{total_recent})")
+            
+            st.markdown("---")
             
             # 게임 목록
+            st.markdown("**🎮 최근 게임 기록**")
             for i, game in enumerate(reversed(recent_games)):
                 date = datetime.fromisoformat(game['date']).strftime("%m/%d %H:%M")
                 status = "🏆 승리" if game['won'] else "❌ 패배"
+                difficulty = "🌟 쉬움" if game['max_number'] <= 50 else "⚡ 보통" if game['max_number'] <= 100 else "🔥 어려움"
+                
                 st.write(f"**{len(recent_games)-i}.** {date} | {status} | "
                         f"{game['attempts']}/{game['max_attempts']}번 | "
-                        f"범위: 1-{game['max_number']}")
+                        f"{difficulty} (1-{game['max_number']}) | "
+                        f"정답: {game['target']}")
 
 def main():
     """메인 애플리케이션"""
