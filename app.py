@@ -317,7 +317,9 @@ else:
     
     else:
         # 게임 종료 후 통계 표시
-        if game_state["attempts_used"] <= game_state["max_attempts"] and user_guess == game_state["secret"]:
+        # 성공 여부 확인 (히스토리에서 정답이 있는지 확인)
+        game_won = any(guess == game_state["secret"] for guess, result_type in game_state.get("guess_history", []) if result_type == "correct")
+        if game_won:
             st.balloons()
         
         st.markdown('<div class="game-stats">', unsafe_allow_html=True)
@@ -329,8 +331,7 @@ else:
             st.metric("사용한 시도", f"{game_state['attempts_used']}회")
         with col3:
             if game_state["attempts_used"] > 0:
-                success = any(guess == game_state["secret"] for guess, _ in game_state.get("guess_history", []))
-                success_rate = "100%" if success else "0%"
+                success_rate = "100%" if game_won else "0%"
             else:
                 success_rate = "0%"
             st.metric("성공률", success_rate)
