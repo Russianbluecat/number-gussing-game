@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 
 # 페이지 설정
 st.set_page_config(
-    page_title="🎯 숫자 맞추기 게임",
+    page_title=" 숫자 맞추기 게임",
     page_icon="🎯",
     layout="centered"
 )
@@ -345,7 +345,7 @@ def main():
     st.markdown("---")
     st.markdown(
         "<div style='text-align: center; color: #666; padding: 20px;'>"
-        "🎯 숫자 맞추기 게임 | Made with Streamlit"
+        " 숫자 맞추기 게임 | Made with Streamlit"
         "</div>", 
         unsafe_allow_html=True
     )
