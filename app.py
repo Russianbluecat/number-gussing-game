@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 
 # 페이지 설정
 st.set_page_config(
-    page_title="🎯 숫자 맞추기 게임",
+    page_title=" 숫자 맞추기 게임",
     page_icon="🎯",
     layout="centered"
 )
