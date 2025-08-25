@@ -130,15 +130,17 @@ else:
         st.markdown(f"**🎯 1부터 {game_state['max_number']} 사이의 숫자를 맞춰보세요!**")
         st.markdown(f"**⏰ 남은 시도 횟수: {game_state['attempts_left']}회**")
         
-        # 숫자 입력 (틀렸을 때 자동으로 초기화되도록 key 변경)
-        input_key = f"user_guess_{game_state.get('attempts_used', 0)}"
+        # 숫자 입력 (틀렸을 때 자동으로 초기화되도록 unique key 사용)
+        if 'input_counter' not in st.session_state:
+            st.session_state.input_counter = 0
+            
         user_guess = st.number_input(
             "숫자를 입력하세요:",
             min_value=1,
             max_value=game_state['max_number'],
             value=None,
             placeholder=f"1부터 {game_state['max_number']} 사이의 숫자",
-            key=input_key,
+            key=f"guess_input_{st.session_state.input_counter}",
             on_change=lambda: st.session_state.update({"enter_pressed": True})
         )
         
@@ -172,6 +174,9 @@ else:
             
             # 상태 업데이트
             st.session_state.game_state = game_state
+            # 입력 필드 초기화를 위한 카운터 증가 (정답이 아닌 경우에만)
+            if guess != game_state["secret"] and game_state["attempts_left"] > 0:
+                st.session_state.input_counter += 1
             # 엔터 상태 초기화
             if "enter_pressed" in st.session_state:
                 del st.session_state["enter_pressed"]
