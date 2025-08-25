@@ -227,7 +227,7 @@ def render_game_stats():
 
 # --- 메인 앱 ---
 def main():
-    st.set_page_config(page_title=" 숫자 맞추기 게임", page_icon="🎯", layout="centered")
+    st.set_page_config(page_title="🎯 숫자 맞추기 게임", page_icon="🎯", layout="centered")
     st.markdown(get_custom_css(), unsafe_allow_html=True)
     initialize_session_state()
     render_game_header()
