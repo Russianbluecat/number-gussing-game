@@ -175,7 +175,7 @@ else:
             # 상태 업데이트
             st.session_state.game_state = game_state
             # 입력 필드 초기화를 위한 카운터 증가 (정답이 아닌 경우에만)
-            if guess != game_state["secret"] and game_state["attempts_left"] > 0:
+            if user_guess != game_state["secret"] and game_state["attempts_left"] > 0:
                 st.session_state.input_counter += 1
             # 엔터 상태 초기화
             if "enter_pressed" in st.session_state:
