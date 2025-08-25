@@ -146,26 +146,72 @@ st.markdown("""
 
 <script>
 function focusNumberInput() {
-    setTimeout(function() {
-        const numberInputs = document.querySelectorAll('input[type="number"]');
-        if (numberInputs.length > 0) {
-            numberInputs[numberInputs.length - 1].focus();
-            numberInputs[numberInputs.length - 1].select();
-        }
-    }, 100);
+    // 즉시 실행 + 딜레이를 통한 다중 시도
+    const attempts = [50, 100, 200, 500, 1000];
+    
+    attempts.forEach(delay => {
+        setTimeout(function() {
+            const numberInputs = document.querySelectorAll('input[type="number"]');
+            if (numberInputs.length > 0) {
+                const lastInput = numberInputs[numberInputs.length - 1];
+                if (document.activeElement !== lastInput) {
+                    lastInput.focus();
+                    lastInput.select();
+                }
+            }
+        }, delay);
+    });
 }
 
+// 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', focusNumberInput);
 window.addEventListener('load', focusNumberInput);
 
+// Streamlit 페이지 변경 감지 및 포커스 설정
+let lastUrl = location.href;
+new MutationObserver(() => {
+    const url = location.href;
+    if (url !== lastUrl) {
+        lastUrl = url;
+        focusNumberInput();
+    }
+}).observe(document, { subtree: true, childList: true });
+
+// 더 자주 체크하여 확실한 포커스 보장
 setInterval(function() {
     const numberInputs = document.querySelectorAll('input[type="number"]');
-    if (numberInputs.length > 0 && document.activeElement !== numberInputs[numberInputs.length - 1]) {
-        if (!document.activeElement || document.activeElement.tagName !== 'INPUT') {
-            numberInputs[numberInputs.length - 1].focus();
+    if (numberInputs.length > 0) {
+        const lastInput = numberInputs[numberInputs.length - 1];
+        // 현재 포커스가 number input이 아니거나 submit 버튼이 아닌 경우에만 포커스 설정
+        if (document.activeElement !== lastInput && 
+            document.activeElement.type !== 'submit' && 
+            !document.activeElement.classList.contains('stButton')) {
+            lastInput.focus();
         }
     }
-}, 500);
+}, 200);
+
+// Streamlit 컴포넌트 재렌더링 감지
+const observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length > 0) {
+            // 새로운 input 요소가 추가되었을 때
+            const hasNewInput = Array.from(mutation.addedNodes).some(node => {
+                return node.nodeType === 1 && 
+                       (node.querySelector && node.querySelector('input[type="number"]'));
+            });
+            if (hasNewInput) {
+                setTimeout(focusNumberInput, 50);
+            }
+        }
+    });
+});
+
+// DOM 변경 감시 시작
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
 </script>
 """, unsafe_allow_html=True)
 
