@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 
 # 페이지 설정
 st.set_page_config(
-    page_title=" 숫자 맞추기 게임",
+    page_title="🎯 숫자 맞추기 게임",
     page_icon="🎯",
     layout="centered"
 )
@@ -295,7 +295,7 @@ def main():
         if not st.session_state.game_over:
             components.html(get_auto_focus_script(), height=0)
         
-        # 숫자 입력 폼
+        # 숫자 입력 폼 (게임이 끝나지 않았을 때만 표시)
         if not st.session_state.game_over:
             with st.form(key="guess_form", clear_on_submit=True):
                 col1, col2 = st.columns([3, 1])
@@ -318,11 +318,31 @@ def main():
                         
                         if is_valid:
                             make_guess(result)
+                            # 게임이 끝났으면 약간의 지연 후 리런
+                            if st.session_state.game_over:
+                                time.sleep(1)
                             st.rerun()
                         else:
                             st.session_state.message = result
                             st.session_state.message_type = "error"
                             st.rerun()
+        
+        # 게임 종료 시 최종 결과를 더 명확하게 표시
+        elif st.session_state.game_over:
+            if st.session_state.game_won:
+                st.markdown(f"""
+                <div class="message-success" style="font-size: 1.2rem; padding: 25px;">
+                    🎉 축하합니다! 정답입니다!<br>
+                    <strong>{st.session_state.target_number}</strong>을(를) {st.session_state.current_attempts}번 만에 맞췄습니다!
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="game-over" style="font-size: 1.2rem; padding: 25px;">
+                    😭 게임 오버!<br>
+                    정답은 <strong>{st.session_state.target_number}</strong>이었습니다.
+                </div>
+                """, unsafe_allow_html=True)
         
         # 게임 종료 후 옵션
         if st.session_state.game_over:
@@ -345,7 +365,7 @@ def main():
     st.markdown("---")
     st.markdown(
         "<div style='text-align: center; color: #666; padding: 20px;'>"
-        " 숫자 맞추기 게임 | Made with Streamlit"
+        "🎯 숫자 맞추기 게임 | Made with Streamlit"
         "</div>", 
         unsafe_allow_html=True
     )
