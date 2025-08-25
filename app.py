@@ -176,6 +176,7 @@ def make_guess(guess):
     st.session_state.guesses.append(guess)
     
     if guess == st.session_state.target_number:
+        # 정답을 맞춘 경우
         st.session_state.game_won = True
         st.session_state.game_over = True
         st.session_state.total_games += 1
@@ -185,18 +186,24 @@ def make_guess(guess):
             st.session_state.current_attempts < st.session_state.best_score):
             st.session_state.best_score = st.session_state.current_attempts
         
-        st.success(f"🎉 축하합니다! {st.session_state.current_attempts}번 만에 정답!")
+        # 5번째 시도에 맞춘 경우와 그 이전에 맞춘 경우 구분
+        if st.session_state.current_attempts == st.session_state.max_attempts:
+            st.success("🎉 축하합니다! 정답입니다!")
+        else:
+            st.success(f"🎉 축하합니다! 정답입니다! {st.session_state.current_attempts}번만에 맞추셨네요!")
         
     elif st.session_state.current_attempts >= st.session_state.max_attempts:
+        # 5번째 시도에서 틀린 경우 (게임 오버)
         st.session_state.game_over = True
         st.session_state.total_games += 1
-        st.error(f"💔 게임 오버! 정답은 {st.session_state.target_number}였습니다.")
+        st.error(f"💔 Game Over! 정답은 {st.session_state.target_number}였습니다.")
         
     else:
-        if guess < st.session_state.target_number:
-            st.info(f"📈 UP! {guess}보다 큽니다.")
+        # 아직 기회가 남아있고 틀린 경우
+        if guess > st.session_state.target_number:
+            st.warning(f"📉 Down! {guess}보다 작습니다.")
         else:
-            st.info(f"📉 DOWN! {guess}보다 작습니다.")
+            st.info(f"📈 Up! {guess}보다 큽니다.")
 
 # --- 렌더링 함수 ---
 def render_game_header():
@@ -245,11 +252,7 @@ def main():
         st.progress(st.session_state.current_attempts / st.session_state.max_attempts, 
                    text=f"남은 기회: {remaining}번")
         
-        # 이전 추측 기록 표시 (간단하게)
-        if st.session_state.guesses:
-            st.markdown("### 🔍 시도한 숫자들")
-            guess_str = " → ".join(map(str, st.session_state.guesses))
-            st.markdown(f"<div class='guess-display'>{guess_str}</div>", unsafe_allow_html=True)
+        # 시도한 숫자들 섹션 제거
             
         if not st.session_state.game_over:
             st.markdown("### 🎯 숫자를 입력하세요")
