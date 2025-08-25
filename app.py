@@ -4,24 +4,10 @@ from datetime import datetime
 
 # --- 상수 정의 및 유틸리티 클래스 ---
 class GameConfig:
-    MIN_RANGE = 10
-    MAX_RANGE = 1000
-    MIN_ATTEMPTS = 3
-    MAX_ATTEMPTS = 15
-    DEFAULT_MAX_NUMBER = 100
-    DEFAULT_MAX_ATTEMPTS = 5
+    FIXED_MAX_NUMBER = 100
+    FIXED_MAX_ATTEMPTS = 5
 
 class GameStats:
-    @staticmethod
-    def calculate_difficulty(max_number, max_attempts):
-        ratio = max_number / max_attempts
-        if ratio <= 20:
-            return "쉬움", "easy"
-        elif ratio <= 40:
-            return "보통", "medium"
-        else:
-            return "어려움", "hard"
-    
     @staticmethod
     def get_achievement_level(win_rate, total_games):
         if total_games < 5:
@@ -82,16 +68,15 @@ def initialize_session_state():
     defaults = {
         'game_active': False,
         'target_number': None,
-        'max_number': GameConfig.DEFAULT_MAX_NUMBER,
-        'max_attempts': GameConfig.DEFAULT_MAX_ATTEMPTS,
+        'max_number': GameConfig.FIXED_MAX_NUMBER,
+        'max_attempts': GameConfig.FIXED_MAX_ATTEMPTS,
         'current_attempts': 0,
         'guesses': [],
         'game_won': False,
         'game_over': False,
         'total_games': 0,
         'total_wins': 0,
-        'best_score': None,
-        'difficulty_preset': 'custom'
+        'best_score': None
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -153,41 +138,10 @@ def render_game_stats():
         st.info("아직 플레이한 게임이 없습니다. 지금 바로 시작해보세요!")
 
 def render_difficulty_presets():
-    st.markdown("### 🎮 난이도 선택")
-    presets = {
-        'easy': {'name': '🌟 쉬움', 'max_number': 50, 'max_attempts': 7},
-        'medium': {'name': '⚡ 보통', 'max_number': 100, 'max_attempts': 5},
-        'hard': {'name': '🔥 어려움', 'max_number': 200, 'max_attempts': 4},
-        'custom': {'name': '⚙️ 사용자 설정', 'max_number': None, 'max_attempts': None}
-    }
-    
-    preset_options = [presets[key]['name'] for key in presets.keys()]
-    preset_keys = list(presets.keys())
-    
-    selected_preset_name = st.selectbox("난이도 프리셋:", options=preset_options, index=preset_keys.index(st.session_state.difficulty_preset), key="preset_select")
-    selected_key = preset_keys[preset_options.index(selected_preset_name)]
-    
-    if selected_key != st.session_state.difficulty_preset:
-        st.session_state.difficulty_preset = selected_key
-        if selected_key != 'custom':
-            st.session_state.max_number = presets[selected_key]['max_number']
-            st.session_state.max_attempts = presets[selected_key]['max_attempts']
-        st.experimental_rerun()
-
-    if selected_key != 'custom':
-        difficulty_text, difficulty_class = GameStats.calculate_difficulty(st.session_state.max_number, st.session_state.max_attempts)
-        st.markdown(f"""<span class="difficulty-badge difficulty-{difficulty_class}">범위: 1-{st.session_state.max_number}, 시도: {st.session_state.max_attempts}번</span>""", unsafe_allow_html=True)
-    return selected_key == 'custom'
+    return False
 
 def render_custom_settings():
-    st.markdown("### ⚙️ 사용자 정의")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.session_state.max_number = st.slider("최대 숫자 범위", min_value=GameConfig.MIN_RANGE, max_value=GameConfig.MAX_RANGE, value=st.session_state.max_number, step=10, key='custom_max_number')
-    with col2:
-        st.session_state.max_attempts = st.slider("최대 시도 횟수", min_value=GameConfig.MIN_ATTEMPTS, max_value=GameConfig.MAX_ATTEMPTS, value=st.session_state.max_attempts, step=1, key='custom_max_attempts')
-    difficulty_text, difficulty_class = GameStats.calculate_difficulty(st.session_state.max_number, st.session_state.max_attempts)
-    st.markdown(f"""<span class="difficulty-badge difficulty-{difficulty_class}">예상 난이도: {difficulty_text}</span>""", unsafe_allow_html=True)
+    pass
 
 # --- 메인 앱 ---
 def main():
@@ -197,9 +151,12 @@ def main():
     render_game_header()
 
     if not st.session_state.game_active:
-        show_custom = render_difficulty_presets()
-        if show_custom:
-            render_custom_settings()
+        # 게임 설명 박스
+        st.markdown("""
+        <div class="game-stats-container" style="text-align: center; font-size: 1.1rem;">
+            <strong>1에서 100 사이의 숫자를 5번의 기회 안에 맞춰보세요!</strong>
+        </div>
+        """, unsafe_allow_html=True)
         
         if st.button("🎮 게임 시작!", type="primary", use_container_width=True):
             start_new_game()
@@ -211,9 +168,7 @@ def main():
         remaining = st.session_state.max_attempts - st.session_state.current_attempts
         st.progress(st.session_state.current_attempts / st.session_state.max_attempts, text=f"남은 기회: {remaining}번")
         
-        if st.session_state.guesses:
-            guesses_text = " → ".join([str(g) for g in st.session_state.guesses])
-            st.markdown(f"""<div class="guess-display">{guesses_text}</div>""", unsafe_allow_html=True)
+        # 히스토리 표시 부분 제거됨
             
         if not st.session_state.game_over:
             user_input = st.number_input(f"숫자 입력 (1-{st.session_state.max_number})", min_value=1, max_value=st.session_state.max_number, step=1, key="guess_input_active", help="Enter 키를 눌러도 제출됩니다!")
