@@ -157,8 +157,8 @@ else:
     # 게임 정보 표시
     st.markdown(f'<div class="attempts-info">🎯 범위: 1 ~ {game_state["max_number"]} | ⏰ 남은 시도: {game_state["attempts_left"]}회</div>', unsafe_allow_html=True)
     
-    # 이전 결과 표시 (있는 경우)
-    if game_state.get("last_result"):
+    # 이전 결과 표시 (게임이 끝났을 때만)
+    if game_state.get("last_result") and game_state["game_over"]:
         st.markdown(game_state["last_result"], unsafe_allow_html=True)
     
     if not game_state["game_over"]:
@@ -167,52 +167,59 @@ else:
         # 숫자 입력 (개선된 방식)
         input_key = f"guess_input_{st.session_state.input_counter}"
         
-        user_guess = st.number_input(
-            "추측할 숫자:",
-            min_value=1,
-            max_value=game_state['max_number'],
-            value=None,
-            placeholder=f"1부터 {game_state['max_number']} 사이의 숫자를 입력하세요",
-            key=input_key,
-            help="숫자를 입력하고 '추측하기' 버튼을 클릭하거나 Enter를 누르세요"
-        )
-        
-        # 추측 버튼
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            guess_button = st.button("🎯 추측하기!", use_container_width=True, type="primary", disabled=(user_guess is None))
-        
-        # 추측 처리
-        if guess_button and user_guess is not None:
-            game_state["attempts_left"] -= 1
-            game_state["attempts_used"] = game_state["max_attempts"] - game_state["attempts_left"]
+        # Enter 키 처리를 위한 form 사용
+        with st.form(key=f"guess_form_{st.session_state.input_counter}", clear_on_submit=False):
+            user_guess = st.number_input(
+                "추측할 숫자:",
+                min_value=1,
+                max_value=game_state['max_number'],
+                value=None,
+                placeholder=f"1부터 {game_state['max_number']} 사이의 숫자를 입력하세요",
+                key=input_key,
+                help="숫자를 입력하고 '추측하기' 버튼을 클릭하거나 Enter를 누르세요"
+            )
             
-            if user_guess == game_state["secret"]:
-                # 성공!
-                game_state["game_over"] = True
-                game_state["last_result"] = f'<div class="result-success">🎉 <strong>정답입니다!!</strong><br>축하합니다! {game_state["attempts_used"]}번 만에 성공했습니다!</div>'
+            # 이전 결과가 있고 게임이 진행 중인 경우 여기에 표시
+            if not game_state["game_over"] and game_state.get("last_result"):
+                st.markdown(game_state["last_result"], unsafe_allow_html=True)
+            
+            # 추측 버튼
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                guess_button = st.form_submit_button("🎯 추측하기!", use_container_width=True, type="primary", disabled=(user_guess is None))
+        
+        # 추측 처리 (form 제출 시)
+        if guess_button:
+            if user_guess is not None:
+                game_state["attempts_left"] -= 1
+                game_state["attempts_used"] = game_state["max_attempts"] - game_state["attempts_left"]
                 
-            elif game_state["attempts_left"] <= 0:
-                # 실패
-                game_state["game_over"] = True
-                game_state["last_result"] = f'<div class="result-fail">💀 <strong>게임 오버!</strong><br>정답은 <strong>{game_state["secret"]}</strong>이었습니다!</div>'
+                if user_guess == game_state["secret"]:
+                    # 성공!
+                    game_state["game_over"] = True
+                    game_state["last_result"] = f'<div class="result-success">🎉 <strong>정답입니다!!</strong><br>축하합니다! {game_state["attempts_used"]}번 만에 성공했습니다!</div>'
+                    
+                elif game_state["attempts_left"] <= 0:
+                    # 실패
+                    game_state["game_over"] = True
+                    game_state["last_result"] = f'<div class="result-fail">💀 <strong>게임 오버!</strong><br>정답은 <strong>{game_state["secret"]}</strong>이었습니다!</div>'
+                    
+                elif user_guess < game_state["secret"]:
+                    # 더 큰 숫자
+                    game_state["last_result"] = f'<div class="result-hint">📈 <strong>Up!</strong> <strong>{user_guess}</strong>보다 더 큰 숫자입니다!<br>남은 시도: {game_state["attempts_left"]}회</div>'
+                    
+                else:
+                    # 더 작은 숫자
+                    game_state["last_result"] = f'<div class="result-hint">📉 <strong>Down!</strong> <strong>{user_guess}</strong>보다 더 작은 숫자입니다!<br>남은 시도: {game_state["attempts_left"]}회</div>'
                 
-            elif user_guess < game_state["secret"]:
-                # 더 큰 숫자
-                game_state["last_result"] = f'<div class="result-hint">📈 <strong>Up!</strong> <strong>{user_guess}</strong>보다 더 큰 숫자입니다!<br>남은 시도: {game_state["attempts_left"]}회</div>'
-                
+                # 상태 저장 및 입력 필드 초기화 (게임이 끝나지 않은 경우)
+                st.session_state.game_state = game_state
+                if not game_state["game_over"]:
+                    clear_input()  # 입력 필드 초기화
+                st.rerun()
+            
             else:
-                # 더 작은 숫자
-                game_state["last_result"] = f'<div class="result-hint">📉 <strong>Down!</strong> <strong>{user_guess}</strong>보다 더 작은 숫자입니다!<br>남은 시도: {game_state["attempts_left"]}회</div>'
-            
-            # 상태 저장 및 입력 필드 초기화 (게임이 끝나지 않은 경우)
-            st.session_state.game_state = game_state
-            if not game_state["game_over"]:
-                clear_input()  # 입력 필드 초기화
-            st.rerun()
-        
-        elif guess_button and user_guess is None:
-            st.error("⚠️ 숫자를 입력해주세요!")
+                st.error("⚠️ 숫자를 입력해주세요!")
     
     else:
         # 게임 종료 후 통계 표시
