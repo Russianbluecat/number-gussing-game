@@ -156,7 +156,9 @@ def initialize_session_state():
         'total_games': 0,
         'total_wins': 0,
         'best_score': None,
-        'current_guess': None
+        'current_guess': None,
+        'feedback_message': None,  # 피드백 메시지 저장용
+        'feedback_type': None     # 메시지 타입 (success, warning, info, error)
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -170,6 +172,8 @@ def start_new_game():
     st.session_state.game_won = False
     st.session_state.game_over = False
     st.session_state.current_guess = None
+    st.session_state.feedback_message = None  # 피드백 메시지 초기화
+    st.session_state.feedback_type = None
 
 def make_guess(guess):
     st.session_state.current_attempts += 1
@@ -188,22 +192,38 @@ def make_guess(guess):
         
         # 5번째 시도에 맞춘 경우와 그 이전에 맞춘 경우 구분
         if st.session_state.current_attempts == st.session_state.max_attempts:
-            st.success("🎉 축하합니다! 정답입니다!")
+            st.session_state.feedback_message = "🎉 축하합니다! 정답입니다!"
         else:
-            st.success(f"🎉 축하합니다! 정답입니다! {st.session_state.current_attempts}번만에 맞추셨네요!")
+            st.session_state.feedback_message = f"🎉 축하합니다! 정답입니다! {st.session_state.current_attempts}번만에 맞추셨네요!"
+        st.session_state.feedback_type = "success"
         
     elif st.session_state.current_attempts >= st.session_state.max_attempts:
         # 5번째 시도에서 틀린 경우 (게임 오버)
         st.session_state.game_over = True
         st.session_state.total_games += 1
-        st.error(f"💔 Game Over! 정답은 {st.session_state.target_number}였습니다.")
+        st.session_state.feedback_message = f"💔 Game Over! 정답은 {st.session_state.target_number}였습니다."
+        st.session_state.feedback_type = "error"
         
     else:
         # 아직 기회가 남아있고 틀린 경우
         if guess > st.session_state.target_number:
-            st.warning(f"📉 Down! {guess}보다 작습니다.")
+            st.session_state.feedback_message = f"📉 Down! {guess}보다 작습니다."
+            st.session_state.feedback_type = "warning"
         else:
-            st.info(f"📈 Up! {guess}보다 큽니다.")
+            st.session_state.feedback_message = f"📈 Up! {guess}보다 큽니다."
+            st.session_state.feedback_type = "info"
+
+def display_feedback_message():
+    """피드백 메시지를 표시하는 함수"""
+    if st.session_state.feedback_message and st.session_state.feedback_type:
+        if st.session_state.feedback_type == "success":
+            st.success(st.session_state.feedback_message)
+        elif st.session_state.feedback_type == "warning":
+            st.warning(st.session_state.feedback_message)
+        elif st.session_state.feedback_type == "info":
+            st.info(st.session_state.feedback_message)
+        elif st.session_state.feedback_type == "error":
+            st.error(st.session_state.feedback_message)
 
 # --- 렌더링 함수 ---
 def render_game_header():
@@ -242,7 +262,7 @@ def main():
         
         if st.button("🎮 게임 시작!", type="primary", use_container_width=True):
             start_new_game()
-            st.rerun()  # 페이지 새로고침으로 게임 시작 상태 반영
+            st.rerun()
         
         with st.expander("📊 게임 통계 보기"):
             render_game_stats()
@@ -252,7 +272,8 @@ def main():
         st.progress(st.session_state.current_attempts / st.session_state.max_attempts, 
                    text=f"남은 기회: {remaining}번")
         
-        # 시도한 숫자들 섹션 제거
+        # 피드백 메시지 표시 (항상 표시되도록)
+        display_feedback_message()
             
         if not st.session_state.game_over:
             st.markdown("### 🎯 숫자를 입력하세요")
