@@ -168,14 +168,13 @@ else:
         input_key = f"guess_input_{st.session_state.input_counter}"
         
         # Enter 키 처리를 위한 form 사용
-        with st.form(key=f"guess_form_{st.session_state.input_counter}", clear_on_submit=False):
+        with st.form(key=f"guess_form_{st.session_state.input_counter}"):
             user_guess = st.number_input(
                 "추측할 숫자:",
                 min_value=1,
                 max_value=game_state['max_number'],
                 value=None,
                 placeholder=f"1부터 {game_state['max_number']} 사이의 숫자를 입력하세요",
-                key=input_key,
                 help="숫자를 입력하고 '추측하기' 버튼을 클릭하거나 Enter를 누르세요"
             )
             
@@ -186,7 +185,7 @@ else:
             # 추측 버튼
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
-                guess_button = st.form_submit_button("🎯 추측하기!", use_container_width=True, type="primary", disabled=(user_guess is None))
+                guess_button = st.form_submit_button("🎯 추측하기!", use_container_width=True, type="primary")
         
         # 추측 처리 (form 제출 시)
         if guess_button:
