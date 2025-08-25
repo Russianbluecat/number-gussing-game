@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 # 1. 상수 및 페이지 설정
 # ====================
 st.set_page_config(
-    page_title="🎯 숫자 맞추기 게임",
+    page_title=" 숫자 맞추기 게임",
     page_icon="🎯",
     layout="centered"
 )
@@ -187,7 +187,7 @@ def render_game_header():
     """게임 헤더를 렌더링합니다."""
     st.markdown(f"""
     <div class="game-header">
-        <h1>🎯 숫자 맞추기 게임</h1>
+        <h1> 숫자 맞추기 게임</h1>
         <p>컴퓨터가 선택한 숫자를 맞춰보세요!</p>
     </div>
     """, unsafe_allow_html=True)
@@ -313,7 +313,7 @@ def main():
     st.markdown("---")
     st.markdown(
         "<div style='text-align: center; color: #666; padding: 20px;'>"
-        "🎯 숫자 맞추기 게임 | Made with Streamlit"
+        " 숫자 맞추기 게임 | Made with Streamlit"
         "</div>", 
         unsafe_allow_html=True
     )
