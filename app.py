@@ -35,7 +35,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# CSS 스타일링 (동일)
+# CSS 스타일링 및 자동 포커스 JavaScript
 st.markdown("""
 <style>
     .main-header {
@@ -91,6 +91,37 @@ st.markdown("""
         font-weight: bold;
     }
 </style>
+
+<script>
+// 숫자 입력 필드에 자동 포커스
+function focusNumberInput() {
+    // 잠깐 기다린 후 입력 필드를 찾아서 포커스
+    setTimeout(function() {
+        const numberInputs = document.querySelectorAll('input[type="number"]');
+        if (numberInputs.length > 0) {
+            // 마지막 number input (가장 최근에 생성된 것)에 포커스
+            numberInputs[numberInputs.length - 1].focus();
+        }
+    }, 100);
+}
+
+// 페이지 로드 시 실행
+document.addEventListener('DOMContentLoaded', focusNumberInput);
+
+// Streamlit이 다시 렌더링될 때도 실행
+window.addEventListener('load', focusNumberInput);
+
+// 추가적으로 주기적으로 체크 (Streamlit의 동적 렌더링 때문)
+setInterval(function() {
+    const numberInputs = document.querySelectorAll('input[type="number"]');
+    if (numberInputs.length > 0 && document.activeElement !== numberInputs[numberInputs.length - 1]) {
+        // 현재 포커스가 number input이 아니면 포커스 설정
+        if (!document.activeElement || document.activeElement.tagName !== 'INPUT') {
+            numberInputs[numberInputs.length - 1].focus();
+        }
+    }
+}, 500);
+</script>
 """, unsafe_allow_html=True)
 
 # 게임 상태 초기화
