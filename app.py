@@ -487,42 +487,7 @@ def render_current_game():
 
 def render_game_history():
     """게임 히스토리 표시"""
-    if st.session_state.game_history:
-        with st.expander("📈 게임 히스토리", expanded=False):
-            recent_games = st.session_state.game_history[-10:]  # 최근 10게임
-            
-            # 성과 트렌드를 간단한 라인 차트로
-            won_games = [game for game in recent_games if game['won']]
-            if won_games:
-                attempts_data = [game['attempts'] for game in won_games]
-                
-                # Streamlit 기본 라인 차트 사용
-                st.markdown("**🏆 승리 게임 시도 횟수 트렌드**")
-                st.line_chart(attempts_data, height=200)
-                
-                avg_attempts = sum(attempts_data) / len(attempts_data)
-                st.write(f"📊 **평균 시도 횟수:** {avg_attempts:.1f}번")
-            
-            # 승률 통계
-            total_recent = len(recent_games)
-            wins_recent = len(won_games)
-            if total_recent > 0:
-                recent_win_rate = (wins_recent / total_recent) * 100
-                st.write(f"📈 **최근 승률:** {recent_win_rate:.1f}% ({wins_recent}/{total_recent})")
-            
-            st.markdown("---")
-            
-            # 게임 목록
-            st.markdown("**🎮 최근 게임 기록**")
-            for i, game in enumerate(reversed(recent_games)):
-                date = datetime.fromisoformat(game['date']).strftime("%m/%d %H:%M")
-                status = "🏆 승리" if game['won'] else "❌ 패배"
-                difficulty = "🌟 쉬움" if game['max_number'] <= 50 else "⚡ 보통" if game['max_number'] <= 100 else "🔥 어려움"
-                
-                st.write(f"**{len(recent_games)-i}.** {date} | {status} | "
-                        f"{game['attempts']}/{game['max_attempts']}번 | "
-                        f"{difficulty} (1-{game['max_number']}) | "
-                        f"정답: {game['target']}")
+    pass  # 히스토리 기능 제거
 
 def main():
     """메인 애플리케이션"""
