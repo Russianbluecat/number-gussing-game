@@ -457,31 +457,9 @@ def render_current_game():
     </div>
     """, unsafe_allow_html=True)
     
-    # 추측 히스토리 시각화
+    # 이전 추측들 표시
     if st.session_state.guesses:
-        st.markdown("### 📊 추측 히스토리")
-        
-        # 간단한 막대 차트로 시각화
-        chart_data = {
-            '시도': list(range(1, len(st.session_state.guesses) + 1)),
-            '추측값': st.session_state.guesses
-        }
-        
-        # Streamlit 기본 차트 사용
-        st.bar_chart(chart_data, x='시도', y='추측값', height=300)
-        
-        # 정답과의 거리 표시
-        if st.session_state.game_over:
-            st.write(f"🎯 **정답:** {st.session_state.target_number}")
-            
-            distances = [abs(guess - st.session_state.target_number) for guess in st.session_state.guesses]
-            min_distance = min(distances)
-            closest_attempt = distances.index(min_distance) + 1
-            
-            st.write(f"🔍 **가장 가까웠던 시도:** {closest_attempt}번째 ({st.session_state.guesses[closest_attempt-1]})")
-            st.write(f"📏 **최소 거리:** {min_distance}")
-        
-        # 텍스트 히스토리
+        st.markdown("### 📝 이전 추측들")
         guesses_text = " → ".join([str(g) for g in st.session_state.guesses])
         st.markdown(f"""
         <div class="guess-display">
