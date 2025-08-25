@@ -1,6 +1,7 @@
 import streamlit as st
 import random
 
+# 세션 상태 초기화 및 게임 로직
 def create_new_game(max_number=100, max_attempts=5):
     """새 게임 상태를 생성합니다."""
     return {
@@ -12,7 +13,8 @@ def create_new_game(max_number=100, max_attempts=5):
         "game_started": False,
         "attempts_used": 0,
         "last_result": None,
-        "guess_history": []  # 추측 히스토리 추가
+        "guess_history": [],
+        "focus_input": True  # 새로운 플래그 추가
     }
 
 def reset_game():
@@ -21,12 +23,15 @@ def reset_game():
     for key in keys_to_delete:
         if key in st.session_state:
             del st.session_state[key]
+    # 게임 재시작 시 포커스 플래그를 True로 설정
+    st.session_state.game_state = create_new_game(st.session_state.game_state.get("max_number", 100), st.session_state.game_state.get("max_attempts", 5))
 
 def clear_input():
     """입력 필드를 초기화합니다."""
     if 'current_guess' in st.session_state:
         del st.session_state.current_guess
     st.session_state.input_counter = st.session_state.get('input_counter', 0) + 1
+    st.session_state.game_state["focus_input"] = True # 입력 필드 초기화 시 포커스 플래그 설정
 
 def validate_input(guess, max_number):
     """입력값 유효성 검사"""
@@ -43,7 +48,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# 개선된 CSS 스타일링
+# 개선된 CSS 스타일링 (기존 코드와 동일)
 st.markdown("""
 <style>
     .main-header {
@@ -143,82 +148,11 @@ st.markdown("""
         margin-right: 0.5rem;
     }
 </style>
-
-<script>
-function focusNumberInput() {
-    // 즉시 실행 + 딜레이를 통한 다중 시도
-    const attempts = [50, 100, 200, 500, 1000];
-    
-    attempts.forEach(delay => {
-        setTimeout(function() {
-            const numberInputs = document.querySelectorAll('input[type="number"]');
-            if (numberInputs.length > 0) {
-                const lastInput = numberInputs[numberInputs.length - 1];
-                if (document.activeElement !== lastInput) {
-                    lastInput.focus();
-                    lastInput.select();
-                }
-            }
-        }, delay);
-    });
-}
-
-// 페이지 로드 시 실행
-document.addEventListener('DOMContentLoaded', focusNumberInput);
-window.addEventListener('load', focusNumberInput);
-
-// Streamlit 페이지 변경 감지 및 포커스 설정
-let lastUrl = location.href;
-new MutationObserver(() => {
-    const url = location.href;
-    if (url !== lastUrl) {
-        lastUrl = url;
-        focusNumberInput();
-    }
-}).observe(document, { subtree: true, childList: true });
-
-// 더 자주 체크하여 확실한 포커스 보장
-setInterval(function() {
-    const numberInputs = document.querySelectorAll('input[type="number"]');
-    if (numberInputs.length > 0) {
-        const lastInput = numberInputs[numberInputs.length - 1];
-        // 현재 포커스가 number input이 아니거나 submit 버튼이 아닌 경우에만 포커스 설정
-        if (document.activeElement !== lastInput && 
-            document.activeElement.type !== 'submit' && 
-            !document.activeElement.classList.contains('stButton')) {
-            lastInput.focus();
-        }
-    }
-}, 200);
-
-// Streamlit 컴포넌트 재렌더링 감지
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.addedNodes.length > 0) {
-            // 새로운 input 요소가 추가되었을 때
-            const hasNewInput = Array.from(mutation.addedNodes).some(node => {
-                return node.nodeType === 1 && 
-                       (node.querySelector && node.querySelector('input[type="number"]'));
-            });
-            if (hasNewInput) {
-                setTimeout(focusNumberInput, 50);
-            }
-        }
-    });
-});
-
-// DOM 변경 감시 시작
-observer.observe(document.body, {
-    childList: true,
-    subtree: true
-});
-</script>
 """, unsafe_allow_html=True)
 
 # 게임 상태 초기화
 if 'game_state' not in st.session_state:
     st.session_state.game_state = create_new_game()
-
 if 'input_counter' not in st.session_state:
     st.session_state.input_counter = 0
 
@@ -227,12 +161,10 @@ st.markdown('<h1 class="main-header">🎯 숫자 맞추기 게임!</h1>', unsafe
 
 # 게임 설정 또는 플레이 영역
 if not st.session_state.game_state["game_started"]:
-    # 게임 설정 영역 (세로 배열로 변경)
     st.markdown('<div class="setup-container">', unsafe_allow_html=True)
     st.markdown("## ⚙️ 게임 설정")
     st.markdown('<p class="info-text">원하는 게임 설정을 입력하고 시작하세요!</p>', unsafe_allow_html=True)
     
-    # 세로 배열로 변경
     st.markdown('<div class="setup-input">', unsafe_allow_html=True)
     st.markdown('<span class="setup-label">🎯 최대 숫자 (1부터 이 숫자까지)</span>', unsafe_allow_html=True)
     max_number = st.number_input(
@@ -259,10 +191,8 @@ if not st.session_state.game_state["game_started"]:
     )
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 게임 미리보기 정보
     st.info(f"🎮 설정: 1~{max_number} 범위, {max_attempts}번의 기회")
     
-    # 게임 시작 버튼
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🎮 게임 시작!", use_container_width=True, type="primary"):
@@ -274,33 +204,45 @@ if not st.session_state.game_state["game_started"]:
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    # 게임 플레이 영역
     st.markdown('<div class="game-container">', unsafe_allow_html=True)
     st.markdown("## 🎲 게임 플레이")
     
     game_state = st.session_state.game_state
     
-    # 게임 정보 표시
     st.markdown(f'<div class="attempts-info">🎯 범위: 1 ~ {game_state["max_number"]} | ⏰ 남은 시도: {game_state["attempts_left"]}회</div>', unsafe_allow_html=True)
     
-    # 추측 히스토리 표시 (게임 진행 중일 때)
     if not game_state["game_over"] and game_state.get("guess_history"):
         st.markdown("### 📝 지금까지의 추측")
-        history_html = ""
-        for i, (guess, result_type) in enumerate(game_state["guess_history"]):
-            emoji = "📈" if result_type == "up" else "📉" if result_type == "down" else "🎯"
-            history_html += f'<span class="history-item">{emoji} {guess}</span>'
+        history_html = "".join([
+            f'<span class="history-item">{"📈" if result_type == "up" else "📉" if result_type == "down" else "🎯"} {guess}</span>'
+            for guess, result_type in game_state["guess_history"]
+        ])
         st.markdown(history_html, unsafe_allow_html=True)
     
-    # 이전 결과 표시 (게임이 끝났을 때만)
     if game_state.get("last_result") and game_state["game_over"]:
         st.markdown(game_state["last_result"], unsafe_allow_html=True)
     
     if not game_state["game_over"]:
         st.markdown("### 숫자를 입력하세요")
         
-        # 숫자 입력
-        input_key = f"guess_input_{st.session_state.input_counter}"
+        # 포커스 스크립트 실행 조건 확인
+        if st.session_state.game_state["focus_input"]:
+            st.markdown("""
+            <script>
+                function focusOnInput() {
+                    const inputElement = document.querySelector('input[type="number"]');
+                    if (inputElement) {
+                        inputElement.focus();
+                        // 입력창이 비어있지 않다면 내용 전체 선택
+                        if (inputElement.value !== '') {
+                            inputElement.select();
+                        }
+                    }
+                }
+                focusOnInput();
+            </script>
+            """, unsafe_allow_html=True)
+            st.session_state.game_state["focus_input"] = False # 플래그 초기화
         
         with st.form(key=f"guess_form_{st.session_state.input_counter}"):
             user_guess = st.number_input(
@@ -312,62 +254,50 @@ else:
                 help="숫자를 입력하고 '추측하기' 버튼을 클릭하거나 Enter를 누르세요"
             )
             
-            # 이전 결과가 있고 게임이 진행 중인 경우 여기에 표시
             if not game_state["game_over"] and game_state.get("last_result"):
                 st.markdown(game_state["last_result"], unsafe_allow_html=True)
             
-            # 추측 버튼
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
                 guess_button = st.form_submit_button("🎯 추측하기!", use_container_width=True, type="primary")
         
-        # 추측 처리
         if guess_button:
             is_valid, error_msg = validate_input(user_guess, game_state['max_number'])
             
             if not is_valid:
                 st.error(f"⚠️ {error_msg}")
             else:
-                # 히스토리에 추측 추가 (결과 판단 전)
                 game_state["attempts_left"] -= 1
                 game_state["attempts_used"] = game_state["max_attempts"] - game_state["attempts_left"]
                 
                 if user_guess == game_state["secret"]:
-                    # 성공!
                     game_state["game_over"] = True
                     game_state["guess_history"].append((user_guess, "correct"))
                     game_state["last_result"] = f'<div class="result-success">🎉 <strong>정답입니다!!</strong><br>축하합니다! {game_state["attempts_used"]}번 만에 성공했습니다!<br>정답: <strong>{game_state["secret"]}</strong></div>'
-                    
+                
                 elif game_state["attempts_left"] <= 0:
-                    # 실패
                     game_state["game_over"] = True
                     result_type = "up" if user_guess < game_state["secret"] else "down"
                     game_state["guess_history"].append((user_guess, result_type))
                     game_state["last_result"] = f'<div class="result-fail">💀 <strong>게임 오버!</strong><br>정답은 <strong>{game_state["secret"]}</strong>이었습니다!<br>마지막 추측 <strong>{user_guess}</strong>은 정답보다 {"작았" if result_type == "up" else "컸"}습니다.</div>'
                     
                 elif user_guess < game_state["secret"]:
-                    # 더 큰 숫자
                     game_state["guess_history"].append((user_guess, "up"))
                     game_state["last_result"] = f'<div class="result-hint">📈 <strong>Up!</strong> <strong>{user_guess}</strong>보다 더 큰 숫자입니다!<br>남은 시도: {game_state["attempts_left"]}회</div>'
                     
                 else:
-                    # 더 작은 숫자
                     game_state["guess_history"].append((user_guess, "down"))
                     game_state["last_result"] = f'<div class="result-hint">📉 <strong>Down!</strong> <strong>{user_guess}</strong>보다 더 작은 숫자입니다!<br>남은 시도: {game_state["attempts_left"]}회</div>'
                 
-                # 상태 저장 및 입력 필드 초기화
                 st.session_state.game_state = game_state
                 if not game_state["game_over"]:
                     clear_input()
                 st.rerun()
     
     else:
-        # 게임 종료 후 통계 표시
-        # 성공 여부 확인 (히스토리에서 정답이 있는지 확인)
-        game_won = any(guess == game_state["secret"] for guess, result_type in game_state.get("guess_history", []) if result_type == "correct")
-        if game_won:
+        if any(result_type == "correct" for _, result_type in game_state.get("guess_history", [])):
             st.balloons()
-        
+            
         st.markdown('<div class="game-stats">', unsafe_allow_html=True)
         st.markdown("### 📊 게임 통계")
         col1, col2, col3 = st.columns(3)
@@ -376,27 +306,21 @@ else:
         with col2:
             st.metric("사용한 시도", f"{game_state['attempts_used']}회")
         with col3:
-            if game_state["attempts_used"] > 0:
-                success_rate = "100%" if game_won else "0%"
-            else:
-                success_rate = "0%"
+            success_rate = "100%" if any(result_type == "correct" for _, result_type in game_state["guess_history"]) else "0%"
             st.metric("성공률", success_rate)
-        
-        # 전체 히스토리 표시
+            
         if game_state.get("guess_history"):
             st.markdown("### 📝 전체 추측 기록")
-            history_text = ""
-            for i, (guess, result_type) in enumerate(game_state["guess_history"]):
-                emoji = "🎯" if result_type == "correct" else "📈" if result_type == "up" else "📉"
-                result_text = "정답!" if result_type == "correct" else "Up" if result_type == "up" else "Down"
-                history_text += f'<span class="history-item">{i+1}. {emoji} {guess} ({result_text})</span>'
+            history_text = "".join([
+                f'<span class="history-item">{i+1}. {"🎯" if result_type == "correct" else "📈" if result_type == "up" else "📉"} {guess} ({"정답!" if result_type == "correct" else "Up" if result_type == "up" else "Down"})</span>'
+                for i, (guess, result_type) in enumerate(game_state["guess_history"])
+            ])
             st.markdown(history_text, unsafe_allow_html=True)
-        
+            
         st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 새 게임 시작 버튼
     st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
